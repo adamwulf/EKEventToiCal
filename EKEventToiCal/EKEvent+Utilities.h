@@ -11,10 +11,10 @@
 
 @interface EKEvent (Utilities)
 
- -(NSString *)genRandStringLength;
+-(NSString *)genRandStringLength;
 
-
- -(NSMutableString*)iCalString;
-
+// attendees array should be in the following format:
+// @[ @{ @"name" : @"Adam Wulf", @"email" : @"adam@example.com" } ]
+-(NSMutableString*)iCalStringWithAttendees:(NSArray<NSDictionary<NSString*,NSString*>*>*)attendees;
 
 @end

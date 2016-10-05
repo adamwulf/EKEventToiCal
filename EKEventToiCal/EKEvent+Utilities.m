@@ -35,7 +35,7 @@
     return stringWithDashes;
 }
          
-- (NSMutableString *)iCalString {
+-(NSMutableString*)iCalStringWithAttendees:(NSArray<NSDictionary<NSString*,NSString*>*>*)attendees {
     
 
 
@@ -139,24 +139,23 @@
     
     //attendees @TODO: The property is read-only and cannot be modified so this is not complete or tested
     
-    for (EKParticipant *attend in self.attendees) {
+    for (NSDictionary<NSString*, NSString*> *attendee in attendees) {
         [iCalString appendString:@"\r\nATTENDEE"];
-        if (attend.name) {
-            [iCalString appendFormat:@";CN=%@",attend.name];
-        }
-        //@TODO:this is not complete
-        if (attend.participantStatus) {
-            [iCalString appendFormat:@";PARTSTAT=%@",attend.participantStatus];
-        }
-         //@TODO:this is not complete
-        if (attend.participantType) {
-            
-            [iCalString appendFormat:@";CUTYPE=%@",attend.participantType];
-        }
-        //@TODO:this is not complete
-        if (attend.participantRole) {
-            [iCalString appendFormat:@";ROLE=%@",attend.participantRole];
-        }
+        [iCalString appendFormat:@";CN=%@:MAILTO:%@",attendee[@"name"], attendee[@"email"]];
+        
+//        //@TODO:this is not complete
+//        if (attend.participantStatus) {
+//            [iCalString appendFormat:@";PARTSTAT=%@",attend.participantStatus];
+//        }
+//         //@TODO:this is not complete
+//        if (attend.participantType) {
+//            
+//            [iCalString appendFormat:@";CUTYPE=%@",attend.participantType];
+//        }
+//        //@TODO:this is not complete
+//        if (attend.participantRole) {
+//            [iCalString appendFormat:@";ROLE=%@",attend.participantRole];
+//        }
     }
         
     //ATTENDEE;CN="Dan Willoughby";CUTYPE=INDIVIDUAL;PARTSTAT=ACCEPTED:mailto:email
@@ -168,7 +167,7 @@
     else {
         [iCalString appendString:@"\r\nTRANSP:TRANSPARENT"];    //free
     }
-    NSLog(@" %d",self.availability);
+//    NSLog(@" %d",self.availability);
     //eventIdentifier @TODO: The property is read-only and cannot be modified so this is not complete or tested
     
     //isDetached @TODO: The property is read-only and cannot be modified so this is not complete or tested
@@ -178,39 +177,41 @@
         [iCalString appendFormat:@"\r\nLOCATION:%@",self.location];
     }
     
-    //organizer @TODO: The property is read-only and cannot be modified so this is not complete or tested
-    if  (self.organizer != nil) {
-        [iCalString appendString:@"\r\nORGANIZER"];
-        if (self.organizer.name) {
-            [iCalString appendFormat:@";CN=%@",self.organizer.name];
-        }
-        //this is not complete
-        if (self.organizer.participantStatus) {
-            [iCalString appendFormat:@";PARTSTAT=%@",self.organizer.participantStatus];
-            
-        }
-        //this is not complete
-        if (self.organizer.participantType) {
-            [iCalString appendFormat:@";CUTYPE=%@",self.organizer.participantType];
-            
-        }
-        //this is not complete
-        if (self.organizer.participantRole) {
-            [iCalString appendFormat:@";ROLE=%@",self.organizer.participantRole];
-            
-        }
-    }
+//    //organizer @TODO: The property is read-only and cannot be modified so this is not complete or tested
+//    if  (self.organizer != nil) {
+//        [iCalString appendString:@"\r\nORGANIZER"];
+//        if (self.organizer.name) {
+//            [iCalString appendFormat:@";CN=%@",self.organizer.name];
+//        }
+//        //this is not complete
+//        if (self.organizer.participantStatus) {
+//            [iCalString appendFormat:@";PARTSTAT=%@",self.organizer.participantStatus];
+//            
+//        }
+//        //this is not complete
+//        if (self.organizer.participantType) {
+//            [iCalString appendFormat:@";CUTYPE=%@",self.organizer.participantType];
+//            
+//        }
+//        //this is not complete
+//        if (self.organizer.participantRole) {
+//            [iCalString appendFormat:@";ROLE=%@",self.organizer.participantRole];
+//            
+//        }
+//    }
     
     //recurrenceRule
-    NSString *recurrenceString = [NSString stringWithFormat:@"%@", self.recurrenceRule];
-    NSArray *partsArray = [recurrenceString componentsSeparatedByString:@"RRULE "];
-    
-    if ([partsArray count] > 1) {
-        NSString *secondHalf = [partsArray objectAtIndex:1];
-        // int loc = [secondHalf rangeOfString:@"Z"].location;
-        //if (loc > 0) {
-        //   return [secondHalf substringToIndex:loc];
-        [iCalString appendFormat:@"\r\nRRULE:%@",secondHalf];
+    for (EKRecurrenceRule* rrule in self.recurrenceRules) {
+        NSString *recurrenceString = [NSString stringWithFormat:@"%@", rrule];
+        NSArray *partsArray = [recurrenceString componentsSeparatedByString:@"RRULE "];
+        
+        if ([partsArray count] > 1) {
+            NSString *secondHalf = [partsArray objectAtIndex:1];
+            // int loc = [secondHalf rangeOfString:@"Z"].location;
+            //if (loc > 0) {
+            //   return [secondHalf substringToIndex:loc];
+            [iCalString appendFormat:@"\r\nRRULE:%@",secondHalf];
+        }
     }
     
     //When a calendar component is created, its sequence number is zero 
@@ -258,24 +259,24 @@
             
             //converts offset to D H M S then appends it to iCalString
             NSInteger offset = alarm.relativeOffset;
-            int i = offset * - 1;
+            NSInteger i = offset * - 1;
             
-            int day = i / (24*60*60);
+            NSInteger day = i / (24*60*60);
             i = i % (24*60*60);
             
-            int hour = i / (60*60);
+            NSInteger hour = i / (60*60);
             i = i % (60*60);
             
-            int minute = i / 60;
+            NSInteger minute = i / 60;
             i = i % 60;
             
-            int second = i;
+            NSInteger second = i;
             
             [iCalString appendFormat:@"\r\nTRIGGER:-P"];
             
             if (day != 0) {
                 
-                [iCalString appendFormat:@"%dD", day];
+                [iCalString appendFormat:@"%dD", (int) day];
                 
             }
             if (hour || minute || second != 0) {
@@ -283,17 +284,17 @@
                 
                 if (hour != 0) {
                     
-                    [iCalString appendFormat:@"%dH", hour];
+                    [iCalString appendFormat:@"%dH", (int) hour];
                     
                 }
                 if (minute != 0) {
                     
-                    [iCalString appendFormat:@"%dM", minute];
+                    [iCalString appendFormat:@"%dM", (int) minute];
                     
                 }
                 if (second != 0) {
                     
-                    [iCalString appendFormat:@"%dS", second];
+                    [iCalString appendFormat:@"%dS", (int) second];
                     
                 }
             }
